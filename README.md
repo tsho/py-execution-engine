@@ -1,5 +1,8 @@
 # Signal-Agnostic Execution Framework
 
+> [!CAUTION]
+> **Disclaimer:** This project is for **educational and demonstration purposes only**. It is designed to illustrate concepts in machine learning and reinforcement learning applied to trading systems. It does **not** constitute financial advice, does **not** guarantee any trading profits, and should **not** be used for live trading. Use at your own risk.
+
 A modular execution engine for FX trading that cleanly separates **signal generation** from **position management** and **risk control**.
 
 Born from real failures in building an FX trading system with Deep Reinforcement Learning.
