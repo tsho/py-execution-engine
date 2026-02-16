@@ -12,3 +12,8 @@
 - Use `logging.getLogger(__name__)` and `logger.info()` instead of `print()`
   - Example scripts should include `setup_logging()` with `format="%(message)s"`
 - Linter: ruff (configured in pyproject.toml)
+
+## Pitfalls
+
+- `ruff check --fix` can over-delete imports: if `from enum import Enum, IntEnum` has unused `IntEnum`, fix may remove the entire import line including `Enum`. Always run `ruff check` after `--fix` to catch breakage.
+- `print()` → `logger.info()` conversion: bare `print()` (for blank lines) must become `logger.info("")`, not `logger.info()` which raises `TypeError`.
