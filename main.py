@@ -1,5 +1,11 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 def main():
-    print("Hello from py-execution-engine!")
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    logger.info("Hello from py-execution-engine!")
 
 
 if __name__ == "__main__":
