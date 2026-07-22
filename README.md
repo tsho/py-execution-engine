@@ -17,7 +17,9 @@ uv run python examples/act1_buy_and_hold_trap.py
 ```
 
 ### Act 2: Reward Design Quagmire
-We tried to fix the DQN by redesigning the reward function. Adding penalties led to random trading. Removing unrealized PnL led to **Zero-Trade Collapse** -- the agent learned that doing nothing is optimal when trading has negative expected value.
+We tried to fix the DQN by redesigning the reward function. Adding penalties led to random trading. Removing unrealized PnL led to **Zero-Trade Collapse** -- the policy degenerated to a single constant action across the whole test set, booking zero completed trades and exactly 0.00% realized PnL.
+
+We first read this as "the agent learned that inaction is optimal." On closer inspection it is subtler, and worth stating carefully: the constant-action behavior showed up **even with zero transaction cost, and even before training** -- a freshly initialized network already emitted one constant action, because its Q-values carried a systematic offset larger than the input-driven variation. So the honest takeaway is not a clean "trading is negative-EV, therefore do nothing" story. It is more uncomfortable: **on the two metrics a desk usually watches -- realized PnL and trade count -- a collapsed policy, an untrained model, and a genuinely idle one are indistinguishable.** (Action-distribution entropy does tell them apart.)
 
 ```bash
 uv run python examples/act2_zero_trade_collapse.py
