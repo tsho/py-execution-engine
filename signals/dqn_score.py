@@ -13,9 +13,11 @@ This maps the raw Q-value difference to a [-1, +1] range:
 - score ≈  0.0: no direction (hold)
 - score ≈ -1.0: strong sell signal
 
-Confidence is derived from the entropy of the Q-value distribution:
-- Low entropy = high confidence (one action clearly dominates)
-- High entropy = low confidence (all actions look similar)
+Confidence is the absolute score, |score| in [0, 1]:
+- |score| ≈ 1: the Q-values clearly favor one direction
+- |score| ≈ 0: BUY and SELL look equally attractive
+
+This matches the configuration reported in the SciPy 2026 paper.
 
 This was the key insight: separate "what direction"
 from "when to enter/exit".
@@ -83,11 +85,10 @@ class DQNScoreSignalGenerator(SignalGenerator):
             TradingSignal with score and confidence.
         """
         score = self._calculate_score(q_values)
-        confidence = self._calculate_confidence(q_values)
 
         return TradingSignal(
             score=score,
-            confidence=confidence,
+            confidence=abs(score),
             metadata={
                 "q_hold": float(q_values[self.HOLD]),
                 "q_buy": float(q_values[self.BUY]),
@@ -116,29 +117,6 @@ class DQNScoreSignalGenerator(SignalGenerator):
         diff = q_buy - q_sell
         scaled_diff = diff / self.temperature
         return float(np.tanh(scaled_diff))
-
-    def _calculate_confidence(self, q_values: np.ndarray) -> float:
-        """Calculate confidence from Q-value distribution entropy.
-
-        High confidence = one action clearly dominates (low entropy).
-        Low confidence = all actions look similar (high entropy).
-
-        Args:
-            q_values: Q-values array.
-
-        Returns:
-            Confidence in [0, 1].
-        """
-        # Softmax with numerical stability
-        exp_q = np.exp(q_values - np.max(q_values))
-        probs = exp_q / np.sum(exp_q)
-
-        # Entropy (0 = certain, log(3) ≈ 1.099 = uniform)
-        entropy = -np.sum(probs * np.log(probs + 1e-10))
-        max_entropy = np.log(len(q_values))
-
-        # Invert: high entropy → low confidence
-        return float(1.0 - entropy / max_entropy)
 
     def reset(self) -> None:
         """No state to reset."""

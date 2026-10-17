@@ -231,6 +231,49 @@ class ExecutionConfig:
     time_exit: TimeExitConfig = field(default_factory=TimeExitConfig)
 
     @classmethod
+    def scipy2026(cls) -> ExecutionConfig:
+        """Create the configuration reported in the SciPy 2026 paper.
+
+        "Avoiding Zero-Trade Policies in RL with a Decoupled MLOps
+        Architecture" (USD/JPY 5-min backtest). The general-purpose
+        defaults of this class are left unchanged; use this preset to
+        reproduce the paper's execution settings.
+
+        - Entry |score| >= 0.2, exit 0.1, reversal 0.5
+        - Stop loss: ATR x 1.0
+        - Take profit: risk-reward 2.5
+        - Trailing stop: activates at 5 pips profit, trails ATR x 0.5
+        - Time exit: 48 bars (4 hours), close before weekend
+
+        The paper's risk limits (daily loss 2%, max drawdown 10%) match
+        the ``RiskConfig`` defaults.
+        """
+        return cls(
+            signal=SignalThresholdConfig(
+                entry_threshold=0.2,
+                exit_threshold=0.1,
+                reversal_threshold=0.5,
+            ),
+            stop_loss=StopLossConfig(
+                type=StopLossType.ATR_BASED,
+                atr_multiplier=1.0,
+            ),
+            take_profit=TakeProfitConfig(
+                type=TakeProfitType.RISK_REWARD,
+                risk_reward_ratio=2.5,
+            ),
+            trailing_stop=TrailingStopConfig(
+                type=TrailingStopType.ATR_BASED,
+                activation_profit_pips=5.0,
+                atr_multiplier=0.5,
+            ),
+            time_exit=TimeExitConfig(
+                max_bars_in_trade=48,
+                close_before_weekend=True,
+            ),
+        )
+
+    @classmethod
     def from_dict(cls, config_dict: dict[str, Any]) -> ExecutionConfig:
         """Create ExecutionConfig from dictionary."""
         signal_dict = config_dict.get("signal", {})
