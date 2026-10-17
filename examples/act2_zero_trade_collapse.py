@@ -14,13 +14,22 @@ Balanced penalties
     → Still random, marginal improvement
 
 Zero-Trade Collapse (unrealized_pnl_weight=0.0)
-    → "Do nothing" becomes the optimal policy!
-    → When there's a transaction cost but no reward for holding,
-       the rational strategy is to never trade.
+    → The policy degenerates to a single constant action (always BUY):
+       it opens one position and never closes it.
+    → Zero completed trades, exactly 0.00% realized PnL.
+    → Our first reading was "inaction is optimal under transaction cost".
+       That turned out to be too clean: the constant action appeared
+       even with zero transaction cost and even before training,
+       because the freshly initialized network's Q-values carried a
+       systematic offset larger than the input-driven variation.
 
 Trade completion bonus
     → Agent trades just to collect the bonus,
        not because it found good entries.
+
+On realized PnL and trade count alone, a collapsed policy, an untrained
+model, and a genuinely idle one are indistinguishable.
+(Action-distribution entropy does tell them apart.)
 
 The key insight: reward engineering is a dead end.
 No matter how we tuned the reward, the DQN was trying to
@@ -121,13 +130,22 @@ def demonstrate_reward_configs() -> None:
             "Over-penalized → trades randomly",
         ),
         (
-            "Zero-Trade Collapse (unrealized_pnl=0)",
+            "Zero-Trade Collapse (constant BUY)",
+            RewardConfig(
+                unrealized_pnl_weight=0.0,
+                transaction_cost=0.0003,
+            ),
+            "always_buy",
+            "Opens one position, never closes it",
+        ),
+        (
+            "Genuinely idle (always HOLD)",
             RewardConfig(
                 unrealized_pnl_weight=0.0,
                 transaction_cost=0.0003,
             ),
             "always_hold",
-            "Do nothing = optimal (no cost!)",
+            "Never trades at all",
         ),
         (
             "Trade Completion Bonus",
@@ -170,22 +188,27 @@ def demonstrate_reward_configs() -> None:
     logger.info("Zero-Trade Collapse Explained")
     logger.info("=" * 70)
     logger.info("")
-    logger.info("When unrealized_pnl_weight = 0 and transaction_cost > 0:")
+    logger.info("The collapsed policy emits one constant action (BUY) on every")
+    logger.info("step: it opens a single position and never closes it, so it")
+    logger.info("books 0 completed trades and exactly 0.00% realized PnL.")
     logger.info("")
-    logger.info("  Expected reward of TRADING:")
-    logger.info("    = E[realized_pnl] - transaction_cost")
-    logger.info("    = 0 - 0.0003  (if model has no edge)")
-    logger.info("    = -0.0003 per trade")
+    logger.info("Our first reading was the clean story:")
+    logger.info("  'trading is negative-EV after costs, so the agent learned")
+    logger.info("   that doing nothing is optimal.'")
     logger.info("")
-    logger.info("  Expected reward of DOING NOTHING:")
-    logger.info("    = 0  (no cost, no reward)")
+    logger.info("A more honest observation:")
+    logger.info("  - the constant action appeared even with zero transaction cost")
+    logger.info("  - it appeared even before training, in a freshly initialized")
+    logger.info("    network whose Q-values carried a systematic offset larger")
+    logger.info("    than the input-driven variation")
     logger.info("")
-    logger.info("  Since -0.0003 < 0, the optimal policy is: NEVER TRADE.")
+    logger.info("Look at the table above: on realized PnL and trade count, the")
+    logger.info("collapsed policy (constant BUY) and a genuinely idle one")
+    logger.info("(always HOLD) are indistinguishable. Action-distribution")
+    logger.info("entropy is what tells a collapsed policy apart.")
     logger.info("")
-    logger.info("This is mathematically optimal! The DQN correctly learned")
-    logger.info("that trading has negative expected value when it has no")
-    logger.info("predictive edge. The problem isn't the model - it's that")
-    logger.info("we're asking one system to do two things:")
+    logger.info("Reward tuning only moved the equilibrium. The deeper problem")
+    logger.info("is that we were asking one system to do two things:")
     logger.info("")
     logger.info("  1. PREDICT market direction (signal generation)")
     logger.info("  2. MANAGE positions (entry/exit/risk)")
@@ -221,8 +244,9 @@ def demonstrate_reward_landscape() -> None:
 
     logger.info("")
     logger.info("  The transaction cost creates a 'dead zone' around zero")
-    logger.info("  where trading always loses money. Without predictive")
-    logger.info("  power, the DQN correctly avoids this zone entirely.")
+    logger.info("  where trading always loses money. This dead zone is real,")
+    logger.info("  but it does not explain the collapse on its own: the same")
+    logger.info("  constant action showed up with zero cost and before training.")
 
 
 if __name__ == "__main__":

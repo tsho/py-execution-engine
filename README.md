@@ -67,6 +67,7 @@ signal_gen = SMACrossSignalGenerator(fast_period=10, slow_period=30)
 
 # 2. Configure execution
 config = ExecutionConfig()  # sensible defaults
+# config = ExecutionConfig.scipy2026()  # settings reported in the SciPy 2026 paper
 risk_config = RiskConfig(initial_balance=1_000_000.0)
 
 # 3. Create engine

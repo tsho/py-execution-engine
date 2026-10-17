@@ -5,10 +5,13 @@ It shows how different reward designs led to pathological behaviors:
 
 - unrealized_pnl_weight=1.0 → Buy & Hold (agent holds forever)
 - heavy penalties → random trading, -6% loss
-- unrealized_pnl_weight=0.0 → Zero-Trade Collapse (do nothing is optimal)
+- unrealized_pnl_weight=0.0 → Zero-Trade Collapse (a single constant action,
+  zero completed trades)
 
-The key insight: when transaction_cost > 0 and holding reward = 0,
-the optimal policy is to never trade (cost-free).
+Caveat: transaction cost alone does not explain the collapse. In the full
+experiments the constant action appeared even with zero transaction cost and
+even before training, because the freshly initialized network's Q-values
+carried a systematic offset larger than the input-driven variation.
 """
 
 from __future__ import annotations
@@ -35,7 +38,7 @@ class RewardConfig:
 
     Zero-Trade Collapse:
         unrealized_pnl_weight=0.0, transaction_cost=0.0003
-        → "Do nothing" became optimal (zero cost)
+        → Policy collapsed to a single constant action; 0 completed trades
 
     Trade Completion Bonus:
         trade_completion_bonus=0.001, profitable_trade_bonus=0.002
